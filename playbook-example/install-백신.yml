@@ -1,28 +1,22 @@
-- name: Uninstall Traps
+#------------------------------------------------------------------------#
+기존 백신 삭제 후
+신규 백신 설치 ( 공인 / 사설 구분하여 맞는 환경에 백신 프로그램 설치 )
+#------------------------------------------------------------------------#
+
+---
+- name: Uninstall Program-1
   shell:
-    echo "yes" | /opt/traps/scripts/uninstall.sh
+    echo "yes" | /opt/Program-1/scripts/uninstall.sh
   ignore_errors: true
 #==============================================#
-- name: Uninstall V3
+- name: Uninstall Program-2
   shell:
-    echo "y" | /usr/local/v3net/uninstall.sh
+    echo "y" | /usr/local/Program-2/uninstall.sh
   ignore_errors: true
 #==============================================#
-- name: Uninstall bitdefender
-  shell: /opt/bitdefender-security-tools/bin/./uninstall
-  ignore_errors: true
-#==============================================#
-#- name: Uninstall bitdefender old version
-#  shell: /opt/bitdefender-security-tools/bin/uninstall
-#  ignore_errors: true
-#==============================================#
-#- name: Delete Install bitdefender File
-#  shell: rm -rf /home/bluesky/utils/bitdefender/*
-#  ignore_errors: true
-#==============================================#
-- name: Make /home/bluesky/utils/bitdefender
+- name: Make /home/users/utils/new-program
   file:
-    path: /home/bluesky/utils/bitdefender
+    path: /home/users/utils/new-program
     state: directory
     owner: root
     group: root
@@ -47,30 +41,30 @@
 #==============================================#
 - name: Copy File | Private IP & Public IP
   copy:
-    #src: /var/lib/awx/projects/_8__gitlab_project/playbook/roles/install/bitdefender-mokdong/files/bitdefender/Basic_Install_Linux_250417_x64.tar
-    src: "roles/install/bitdefender-mokdong/files/bitdefender/Basic_Install_Linux_250417_x64.tar"
-    dest: /home/bluesky/utils/bitdefender
+    #src: /var/lib/awx/projects/_8__gitlab_project/playbook/roles/install/new-program/files/new-program/Basic_Install_Linux_250417_x64.tar
+    src: "roles/install/new-program/files/new-program/Basic_Install_Linux_250417_x64.tar"
+    dest: /home/users/utils/new-program
   when: has_2_prefix
 #==============================================#
 - name: Copy File | Only Private IP
   copy:
-    #src: /var/lib/awx/projects/_8__gitlab_project/playbook/roles/install/bitdefender-mokdong/files/bitdefender/Mokdong_Private_Linux_250417_x64.tar
-    src: "roles/install/bitdefender-mokdong/files/bitdefender/Mokdong_Private_Linux_250417_x64.tar"
-    dest: /home/bluesky/utils/bitdefender
+    #src: /var/lib/awx/projects/_8__gitlab_project/playbook/roles/install/new-program/files/new-program/Private_Linux_250417_x64.tar
+    src: "roles/install/new-program/files/new-program/Private_Linux_250417_x64.tar"
+    dest: /home/users/utils/new-program
   when: has_only_1_prefix
 #==============================================#
 - name: Unarchive File | Private IP & Public IP
-  shell: tar -xvf /home/bluesky/utils/bitdefender/Basic_Install_Linux_250417_x64.tar -C /home/bluesky/utils/bitdefender
+  shell: tar -xvf /home/users/utils/new-program/Basic_Install_Linux_250417_x64.tar -C /home/users/utils/new-program
   when: has_2_prefix
 #==============================================#
 - name: Unarchive File | Only Private IP
-  shell: tar -xvf /home/bluesky/utils/bitdefender/Mokdong_Private_Linux_250417_x64.tar -C /home/bluesky/utils/bitdefender
+  shell: tar -xvf /home/bluesky/utils/new-program/Private_Linux_250417_x64.tar -C /home/bluesky/utils/new-program
   when: has_only_1_prefix
 #==============================================#
 - name: Change Mode installer
-  shell: chmod +x /home/bluesky/utils/bitdefender/installer
+  shell: chmod +x /home/users/utils/new-program/installer
 #==============================================#
-- name: Install bitdefender
-  shell: nohup /home/bluesky/utils/bitdefender/installer > /tmp/bitdefender_install.log 2>&1 &
+- name: Install new-program
+  shell: nohup /home/users/utils/new-program/installer > /tmp/new-program.log 2>&1 &
   async: 1
   poll: 0
