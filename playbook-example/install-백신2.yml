@@ -1,0 +1,39 @@
+---
+  #==============================================#
+  - name: Install expect (Ubuntu)
+    apt:
+      name: expect
+      state: present
+      update_cache: yes
+  #==============================================#
+  - name: Create install directory
+    file:
+      path: /home/users/utils/webshell
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+  #==============================================#
+  - name: Copy webshell file /home/users/utils/webshell
+    copy:
+      src: "{{ webshell_src }}"
+      dest: "/home/users/utils/webshell"
+  #==============================================#
+  - name: Unarchive webshell
+    unarchive:
+      src: "/home/users/utils/webshell/{{ webshell_file }}"
+      dest: /home/users/utils/webshell
+      remote_src: yes
+  #==============================================#
+  - name: Copy webshell file /opt
+    command: >
+      cp -arp /home/users/utils/webshell/ShellMonitorAgent
+      /opt
+  #==============================================#
+  - name: Run setupAgent (non-interactive)
+    shell: |
+      bash /opt/ShellMonitorAgent/setupAgent <<EOF
+      {{ manager_ip }}
+      {{ manager_port }}
+      y
+      EOF
