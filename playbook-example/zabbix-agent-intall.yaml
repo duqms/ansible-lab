@@ -1,0 +1,44 @@
+---
+- name: Copy Zabbix agent File
+  copy:
+    src: zabbix-release_6.0-4+ubuntu22.04_all.deb
+    dest: /home/users/utils/zabbix
+    owner: root
+    group:  root
+    mode: go+r
+  
+  
+- name: Zabbix-agent Install
+  apt:
+    deb: /home/users/utils/zabbix/zabbix-release_6.0-4+ubuntu22.04_all.deb
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes
+
+- name: Pass options to dpkg on run
+  apt:
+    upgrade: dist
+    update_cache: yes
+    dpkg_options: 'force-confold,force-confdef' 
+  ignore_errors: true
+
+- name: Remove useless packages from the cache
+  apt:
+    autoclean: yes  
+  
+- name: Install Package
+  apt:
+    pkg:
+    - zabbix-agent2
+
+- name: Copy zabbix_agent2.conf files
+  copy:
+    src: zabbix_agent2.conf
+    dest: "/etc/zabbix/"
+    owner: "root"
+    group: "root"
+    mode: go+r
+
+- name: restart zabbix-agent2
+  systemd: name=zabbix-agent2 state=restarted
