@@ -1,0 +1,33 @@
+#------------------------------------------------------------------------#
+운영 NAS 장애 시 DR NAS IP로 교체하는 Playbook
+- 운영 NAS ( 1.1.1.11 / 1.1.1.13 )
+- DR NAS ( 1.1.1.13 )
+#------------------------------------------------------------------------#
+
+---
+# 1. 현재 Main NAS 마운트 해제 (1.1.1.11 / 1.1.1.12)
+- name: Unmount Main NAS mount points
+  shell: |
+    mount | awk '/1\.1\.1\.1[12]:/ {print $3}' | xargs -r umount
+  args:
+    warn: false
+  ignore_errors: yes
+
+# 2. Main NAS (1.1.1.11, 1.1.1.12) fstab 라인 주석 처리=비활성화
+- name: Comment out Main NAS entries in fstab
+  replace:
+    path: "{{ fstab_path }}"
+    regexp: '^(1\.1\.1\.1[12]:.*)$'
+    replace: '#\1'
+    backup: yes
+
+# 3. DR NAS (1.1.1.13) fstab 라인 주석 해제=활성화
+- name: Uncomment DR NAS entries in fstab
+  replace:
+    path: "{{ fstab_path }}"
+    regexp: '^#(1\.1\.1\.13:.*)$'
+    replace: '\1'
+
+# 4. DR NAS 마운트
+- name: Mount all filesystems from fstab
+  command: mount -a
