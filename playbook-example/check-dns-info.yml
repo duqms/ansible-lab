@@ -1,0 +1,89 @@
+---
+# =========================
+# 1. 공통 변수 초기화
+# =========================
+- name: Initialize DNS variables
+  set_fact:
+    centos_dns_lines: []
+    ubuntu_dns_lines: []
+
+# =========================
+# 2. /etc/resolv.conf (공통)
+# =========================
+- name: DNS from /etc/resolv.conf
+  shell: "grep '^nameserver' /etc/resolv.conf | awk '{print $2}'"
+  register: resolv_dns
+  ignore_errors: yes
+
+# =========================
+# 3. CentOS / RHEL DNS
+# =========================
+- name: DNS from CentOS ifcfg files
+  shell: >
+    grep -h '^DNS' /etc/sysconfig/network-scripts/ifcfg-* |
+    awk -F= '{print $2}' |
+    tr ',' '\n' |
+    sort -u
+  register: centos_dns
+  ignore_errors: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Set CentOS DNS lines
+  set_fact:
+    centos_dns_lines: "{{ centos_dns.stdout_lines | default([]) }}"
+  when: ansible_os_family == "RedHat"
+
+# =========================
+# 4. Ubuntu DNS (netplan)
+# =========================
+- name: DNS from Ubuntu netplan (array + list)
+  shell: >
+    awk '
+    /^[[:space:]]*nameservers:/ {in_ns=1}
+    in_ns && /^[[:space:]]*addresses:/ {
+      if (match($0, /\[([0-9.,[:space:]]+)\]/, a)) {
+        gsub(/ /, "", a[1]);
+        gsub(/,/, "\n", a[1]);
+        print a[1];
+        in_ns=0;
+      }
+    }
+    in_ns && /^[[:space:]]*-[[:space:]]*[0-9]/ {
+      match($0,/([0-9]{1,3}(\.[0-9]{1,3}){3})/,a);
+      if(a[1]!="") print a[1];
+    }
+    ' /etc/netplan/*.yaml | sort -u
+  register: ubuntu_dns
+  ignore_errors: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: Set Ubuntu DNS lines
+  set_fact:
+    ubuntu_dns_lines: "{{ ubuntu_dns.stdout_lines | default([]) }}"
+  when: ansible_distribution == "Ubuntu"
+
+# =========================
+# 5. 모든 호스트 결과 취합 (AWX Artifacts)
+# =========================
+- name: Consolidate DNS report (Artifacts)
+  run_once: true
+  vars:
+    report_all: |
+      {% for host in ansible_play_hosts %}
+      ================================
+      [Host: {{ host }}]
+
+      [/etc/resolv.conf]
+      {{ hostvars[host].resolv_dns.stdout_lines | default([]) | join(', ') | default('null') }}
+
+      [CentOS / RHEL]
+      {{ hostvars[host].centos_dns_lines | default([]) | join(', ') | default('null') }}
+
+      [Ubuntu netplan]
+      {{ hostvars[host].ubuntu_dns_lines | default([]) | join(', ') | default('null') }}
+
+      {% endfor %}
+      ================================
+  set_stats:
+    data:
+      dns_report: "{{ report_all }}"
