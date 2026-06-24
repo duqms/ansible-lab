@@ -1,0 +1,84 @@
+---
+# OS 정보 확인 (Python 불필요)
+- name: Read OS release
+  raw: cat /etc/os-release
+  register: os_release
+  changed_when: false
+  become: true
+
+# --------------------
+# Ubuntu
+# --------------------
+- name: Ubuntu - install monit
+  raw: |
+    apt-get update -y
+    apt-get install -y monit
+  when: "'Ubuntu' in os_release.stdout"
+  become: true
+
+- name: Ubuntu Copy monitrc files
+  copy:
+    src: monitrc
+    dest: /etc/monit/monitrc
+    owner: root
+    group: root
+    mode: '0700'
+  when: "'Ubuntu' in os_release.stdout"
+  become: true
+
+- name: Ubuntu Copy alert files
+  copy:
+    src: alert
+    dest: /etc/monit
+    owner: root
+    group: root
+    mode: '0700'
+  when: "'Ubuntu' in os_release.stdout"
+  become: true
+
+- name: Ubuntu Monit status
+  shell: |
+    printf '\n## system check\nmonit summary\n' >> /root/.profile
+  when: "'Ubuntu' in os_release.stdout"
+  become: true
+
+- name: Enable monit service (Ubuntu)
+  raw: |
+    systemctl enable monit
+    systemctl restart monit
+  when: "'Ubuntu' in os_release.stdout"
+  become: true
+
+# --------------------
+# CentOS
+# --------------------
+- name: CentOS - install monit
+  raw: yum install -y monit
+  when: "'CentOS' in os_release.stdout"
+  become: true
+
+- name: CentOS Copy monitrc files
+  copy:
+    src: monitrc1
+    dest: /etc/monitrc
+    owner: root
+    group: root
+    mode: '0700'
+  when: "'CentOS' in os_release.stdout"
+  become: true
+
+- name: CentOS Copy alert files
+  copy:
+    src: alert
+    dest: /etc/monit.d/alert
+    owner: root
+    group: root
+    mode: '0700'
+  when: "'CentOS' in os_release.stdout"
+  become: true
+
+- name: CentOS Monit status
+  shell: |
+    printf '\n## system check\nmonit summary\n' >> /root/.bashrc
+  when: "'CentOS' in os_release.stdout"
+  become: true
