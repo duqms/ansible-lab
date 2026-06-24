@@ -1,3 +1,7 @@
+#------------------------------------------------------------------------#
+OpenSSL 보안 취약점 패치를 위한 버전 체크 playbook
+#------------------------------------------------------------------------#
+
 ---
 - name: Get installed OpenSSL packages
   shell: apt list --installed 2>/dev/null | grep -i '^openssl'
