@@ -1,0 +1,19 @@
+---
+- name: Get installed OpenSSL packages
+  shell: apt list --installed 2>/dev/null | grep -i '^openssl'
+  register: apt_openssl_list
+  changed_when: false
+  failed_when: false
+
+- name: Save OpenSSL package list to AWX artifact
+  set_stats:
+    data:
+      openssl_info: >-
+        {{
+          (ansible_stats.openssl_info | default({}))
+          | combine({
+              inventory_hostname: {
+                "apt_installed": apt_openssl_list.stdout_lines | default([])
+              }
+            })
+        }}
