@@ -1,0 +1,34 @@
+# 리눅스 OS 보안 체크 스크립트 실행
+
+- name: "make raon dir"
+  file:
+    path: /security
+    state: directory
+    group: root
+    owner: root
+    
+- name: "copy 스크립트.sh"
+  copy:
+    src: security_SERVER_Unix.sh
+    dest: /security/security_SERVER_Unix.sh
+    group: root
+    owner: root
+    mode: 0744
+    force: yes
+    
+- name: "run 스크립트.sh"                   # 원격지 서버에서 해당되는 파일 
+  environment:
+    TMOUT=600                              # /etc/profile 에 있는 TMOUT=600 환경 변수 값을 읽어서 실행 하도록 설정
+  shell: cd /security; ./security_SERVER_Unix.sh
+  become: ture
+
+- name: "find result *.tar file"
+  shell: find /security -name "*.tar" -type f
+  register: file_to_fetch
+  
+- name: "fetch to file ansible-svr"  # 앤서블 서버로 결과 파일 보내기
+  fetch:
+    src: "{{ item }}"
+    dest: /home/user/sec-check/prd/
+    flat: yees
+  whith_items: "{{ file_to_fetch.stdout_lines }}"
